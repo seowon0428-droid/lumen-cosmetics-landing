@@ -18,3 +18,12 @@
 ## GitHub Pages (선택)
 
 Repository **Settings → Pages → Branch: main, folder: / (root)** 후 `index.html` URL로 접속.
+
+## Vercel 배포
+
+1. [vercel.com](https://vercel.com) 로그인 → **Add New → Project**
+2. GitHub 저장소 `lumen-cosmetics-landing` Import
+3. Framework Preset: **Other** (빌드 명령 없음, Output: `.` 또는 루트)
+4. **Deploy**
+
+로컬 CLI: `npx vercel login` 후 `npx vercel deploy --prod`
