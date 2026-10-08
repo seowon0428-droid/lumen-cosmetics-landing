@@ -35,3 +35,9 @@ window.LUMEN_CONFIG = {
 ## 5. 코드 수정 후
 
 Apps Script를 변경했다면 **배포** → **배포 관리** → **새 버전**으로 다시 배포해야 합니다.
+
+## 6. 폼이 안 될 때 (404 / 서버 응답 오류)
+
+- 브라우저에서 `/exec` URL을 열었을 때 **404**이면 배포가 삭제되었거나 URL이 바뀐 것입니다.
+- **배포 → 배포 관리 → 웹 앱 → URL 복사** 후 `js/config.js` 갱신 → Git push 또는 `npx vercel deploy --prod`
+- GET으로 `{"status":"ok",...}` JSON이 보여야 정상입니다.

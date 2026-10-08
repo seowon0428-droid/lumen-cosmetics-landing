@@ -59,6 +59,27 @@
     formStatus.className = "form-status form-status--" + type;
   }
 
+  function parseGasJson(text) {
+    const trimmed = (text || "").trim();
+    if (!trimmed) {
+      return null;
+    }
+    try {
+      return JSON.parse(trimmed);
+    } catch {
+      const start = trimmed.indexOf("{");
+      const end = trimmed.lastIndexOf("}");
+      if (start >= 0 && end > start) {
+        try {
+          return JSON.parse(trimmed.slice(start, end + 1));
+        } catch {
+          return null;
+        }
+      }
+    }
+    return null;
+  }
+
   async function submitToSheet(payload) {
     if (!endpoint) {
       throw new Error(
@@ -66,27 +87,46 @@
       );
     }
 
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "text/plain;charset=utf-8",
-      },
-      body: JSON.stringify(payload),
-    });
+    let response;
+    try {
+      response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "text/plain;charset=utf-8",
+        },
+        body: JSON.stringify(payload),
+        redirect: "follow",
+      });
+    } catch {
+      throw new Error(
+        "네트워크 오류입니다. 인터넷 연결을 확인하거나 잠시 후 다시 시도해 주세요."
+      );
+    }
 
     const text = await response.text();
-    let body;
-    try {
-      body = JSON.parse(text);
-    } catch {
-      throw new Error("서버 응답을 처리할 수 없습니다.");
+
+    if (response.status === 404) {
+      throw new Error(
+        "문의 API 주소가 유효하지 않습니다. Apps Script를 다시 배포한 뒤 js/config.js의 GAS_ENDPOINT를 새 /exec URL로 바꿔 주세요."
+      );
     }
 
-    if (!response.ok || body.error) {
-      throw new Error(body.error || "제출에 실패했습니다.");
+    const body = parseGasJson(text);
+    if (!body) {
+      throw new Error(
+        "서버 응답을 처리할 수 없습니다. Apps Script 웹 앱이 배포되어 있는지, URL이 /exec 로 끝나는지 확인해 주세요."
+      );
     }
 
-    return body;
+    if (body.error) {
+      throw new Error(body.error);
+    }
+
+    if (body.message) {
+      return body;
+    }
+
+    throw new Error("제출에 실패했습니다.");
   }
 
   if (form) {
