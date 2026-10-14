@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LUMEN | 게시판</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Playfair+Display:wght@600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/styles.css" />
+    <link rel="stylesheet" href="css/board.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container site-header__inner">
+        <a class="logo" href="index.html">LUMEN</a>
+        <nav class="site-nav" aria-label="주요 메뉴">
+          <a href="index.html#about">About</a>
+          <a href="index.html#product">Product</a>
+          <a href="index.html#contact">Contact</a>
+          <a href="board.html" aria-current="page">Board</a>
+          <a href="login.html" id="nav-auth-link">Login</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="board-main container">
+      <header class="board-header">
+        <h1 class="section__title">Board</h1>
+        <p class="section__lead">게시판</p>
+        <p class="board-header__user" id="board-user" hidden></p>
+      </header>
+
+      <section class="board-compose" id="compose-section" hidden>
+        <h2 class="board-compose__title">새 글 작성</h2>
+        <form id="post-form" class="board-form">
+          <div class="form-field">
+            <label for="post-title">제목</label>
+            <input
+              type="text"
+              id="post-title"
+              required
+              minlength="2"
+              maxlength="120"
+            />
+          </div>
+          <div class="form-field">
+            <label for="post-body">내용</label>
+            <textarea
+              id="post-body"
+              rows="6"
+              required
+              minlength="2"
+              maxlength="5000"
+            ></textarea>
+          </div>
+          <button type="submit" class="btn">등록</button>
+          <p class="form-status" id="post-status" role="status"></p>
+        </form>
+      </section>
+
+      <section class="board-list" aria-labelledby="list-title">
+        <h2 class="board-list__title" id="list-title">글 목록</h2>
+        <ul class="post-list" id="post-list"></ul>
+        <p class="board-empty" id="post-empty" hidden>아직 글이 없습니다.</p>
+        <p class="form-status" id="list-status" role="status"></p>
+      </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js"></script>
+    <script src="js/supabase-app.js"></script>
+    <script src="js/board.js"></script>
+    <script src="js/auth-nav.js"></script>
+  </body>
+</html>

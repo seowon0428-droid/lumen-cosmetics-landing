@@ -4,7 +4,8 @@
   const formStatus = document.getElementById("form-status");
 
   const config = window.LUMEN_CONFIG || {};
-  const endpoint = (config.GAS_ENDPOINT || "").trim();
+  const supabaseUrl = (config.SUPABASE_URL || "").trim().replace(/\/$/, "");
+  const supabaseAnonKey = (config.SUPABASE_ANON_KEY || "").trim();
 
   function getFieldErrorEl(name) {
     return form.querySelector('.field-error[data-for="' + name + '"]');
@@ -59,43 +60,37 @@
     formStatus.className = "form-status form-status--" + type;
   }
 
-  function parseGasJson(text) {
-    const trimmed = (text || "").trim();
-    if (!trimmed) {
-      return null;
-    }
-    try {
-      return JSON.parse(trimmed);
-    } catch {
-      const start = trimmed.indexOf("{");
-      const end = trimmed.lastIndexOf("}");
-      if (start >= 0 && end > start) {
-        try {
-          return JSON.parse(trimmed.slice(start, end + 1));
-        } catch {
-          return null;
-        }
-      }
-    }
-    return null;
-  }
-
-  async function submitToSheet(payload) {
-    if (!endpoint) {
+  async function submitToSupabase(payload) {
+    if (!supabaseUrl || !supabaseAnonKey) {
       throw new Error(
-        "Google Apps Script URL이 설정되지 않았습니다. js/config.js의 GAS_ENDPOINT를 입력해 주세요."
+        "Supabase 설정이 없습니다. js/config.js에 SUPABASE_URL과 SUPABASE_ANON_KEY를 입력해 주세요."
       );
+    }
+
+    if (payload.website) {
+      return;
     }
 
     let response;
     try {
-      response = await fetch(endpoint, {
+      const headers = {
+        apikey: supabaseAnonKey,
+        "Content-Type": "application/json",
+        Prefer: "return=minimal",
+      };
+      if (supabaseAnonKey.startsWith("eyJ")) {
+        headers.Authorization = "Bearer " + supabaseAnonKey;
+      }
+
+      response = await fetch(supabaseUrl + "/rest/v1/inquiries", {
         method: "POST",
-        headers: {
-          "Content-Type": "text/plain;charset=utf-8",
-        },
-        body: JSON.stringify(payload),
-        redirect: "follow",
+        headers: headers,
+        body: JSON.stringify({
+          name: payload.name,
+          email: payload.email,
+          message: payload.message,
+          privacy_agreed: payload.privacy_agreed,
+        }),
       });
     } catch {
       throw new Error(
@@ -103,30 +98,33 @@
       );
     }
 
-    const text = await response.text();
+    if (response.ok) {
+      return;
+    }
+
+    let detail = "";
+    try {
+      const body = await response.json();
+      if (body && body.message) {
+        detail = body.message;
+      }
+    } catch {
+      /* ignore */
+    }
+
+    if (response.status === 401 || response.status === 403) {
+      throw new Error(
+        "Supabase 인증 또는 RLS 정책 오류입니다. anon 키와 schema.sql 실행 여부를 확인해 주세요."
+      );
+    }
 
     if (response.status === 404) {
       throw new Error(
-        "문의 API 주소가 유효하지 않습니다. Apps Script를 다시 배포한 뒤 js/config.js의 GAS_ENDPOINT를 새 /exec URL로 바꿔 주세요."
+        "inquiries 테이블을 찾을 수 없습니다. supabase/schema.sql을 SQL Editor에서 실행해 주세요."
       );
     }
 
-    const body = parseGasJson(text);
-    if (!body) {
-      throw new Error(
-        "서버 응답을 처리할 수 없습니다. Apps Script 웹 앱이 배포되어 있는지, URL이 /exec 로 끝나는지 확인해 주세요."
-      );
-    }
-
-    if (body.error) {
-      throw new Error(body.error);
-    }
-
-    if (body.message) {
-      return body;
-    }
-
-    throw new Error("제출에 실패했습니다.");
+    throw new Error(detail || "제출에 실패했습니다.");
   }
 
   if (form) {
@@ -151,7 +149,7 @@
       setStatus("전송 중…", "success");
 
       try {
-        await submitToSheet(payload);
+        await submitToSupabase(payload);
         form.reset();
         setStatus("접수되었습니다. 빠른 시일 내에 답변드리겠습니다.", "success");
       } catch (err) {

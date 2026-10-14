@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LUMEN | 로그인</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Playfair+Display:wght@600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/styles.css" />
+    <link rel="stylesheet" href="css/board.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container site-header__inner">
+        <a class="logo" href="index.html">LUMEN</a>
+        <nav class="site-nav" aria-label="주요 메뉴">
+          <a href="index.html#about">About</a>
+          <a href="index.html#product">Product</a>
+          <a href="index.html#contact">Contact</a>
+          <a href="board.html">Board</a>
+          <a href="login.html" id="nav-auth-link">Login</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="auth-main container">
+      <div class="auth-card">
+        <h1 class="auth-card__title">회원</h1>
+        <div class="auth-tabs" role="tablist">
+          <button
+            type="button"
+            class="auth-tabs__btn is-active"
+            id="tab-login"
+            role="tab"
+            aria-selected="true"
+          >
+            로그인
+          </button>
+          <button
+            type="button"
+            class="auth-tabs__btn"
+            id="tab-signup"
+            role="tab"
+            aria-selected="false"
+          >
+            회원가입
+          </button>
+        </div>
+
+        <form class="auth-form" id="login-form">
+          <div class="form-field">
+            <label for="login-email">이메일</label>
+            <input type="email" id="login-email" required autocomplete="email" />
+          </div>
+          <div class="form-field">
+            <label for="login-password">비밀번호</label>
+            <input
+              type="password"
+              id="login-password"
+              required
+              minlength="8"
+              autocomplete="current-password"
+            />
+          </div>
+          <button type="submit" class="btn btn--full">로그인</button>
+          <p class="form-status" id="login-status" role="status"></p>
+        </form>
+
+        <form class="auth-form" id="signup-form" hidden>
+          <div class="form-field">
+            <label for="signup-email">이메일</label>
+            <input type="email" id="signup-email" required autocomplete="email" />
+          </div>
+          <div class="form-field">
+            <label for="signup-password">비밀번호 (8자 이상)</label>
+            <input
+              type="password"
+              id="signup-password"
+              required
+              minlength="8"
+              autocomplete="new-password"
+            />
+          </div>
+          <div class="form-field">
+            <label for="signup-password-confirm">비밀번호 확인</label>
+            <input
+              type="password"
+              id="signup-password-confirm"
+              required
+              minlength="8"
+              autocomplete="new-password"
+            />
+          </div>
+          <button type="submit" class="btn btn--full">회원가입</button>
+          <p class="form-status" id="signup-status" role="status"></p>
+        </form>
+      </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js"></script>
+    <script src="js/supabase-app.js"></script>
+    <script src="js/login.js"></script>
+    <script src="js/auth-nav.js"></script>
+  </body>
+</html>

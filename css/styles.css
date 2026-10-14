@@ -86,6 +86,12 @@ a {
   opacity: 0.65;
 }
 
+.site-nav a:focus,
+.site-nav a:active,
+.site-nav a[aria-current="page"] {
+  text-decoration: none;
+}
+
 /* Hero */
 .hero {
   position: relative;
