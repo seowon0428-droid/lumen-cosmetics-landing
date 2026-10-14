@@ -60,6 +60,10 @@ Supabase **Table Editor → inquiries**에서 행을 확인하거나, 웹 **관�
 
 이메일은 SQL 파일에서 원하는 주소로 바꿀 수 있습니다.
 
+### 문의 상태·관리자 답변
+
+SQL Editor에서 [schema-inquiries-reply.sql](./schema-inquiries-reply.sql) 실행 후, 접수 문의 탭에서 **신규/답변완료** 상태와 **답변 저장**을 사용합니다.
+
 주소 예: `http://localhost:5500/admin.html`
 
 ## 게시판 (회원 로그인)

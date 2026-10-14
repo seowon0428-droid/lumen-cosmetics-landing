@@ -6,7 +6,12 @@ create table if not exists public.inquiries (
   name text not null,
   email text not null,
   message text not null,
-  privacy_agreed boolean not null default false
+  privacy_agreed boolean not null default false,
+  status text not null default 'new',
+  admin_reply text,
+  replied_at timestamptz,
+  replied_by text,
+  constraint inquiries_status_check check (status in ('new', 'replied'))
 );
 
 alter table public.inquiries enable row level security;

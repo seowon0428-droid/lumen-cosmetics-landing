@@ -33,6 +33,29 @@ create policy "inquiries_admin_select"
     )
   );
 
+drop policy if exists "inquiries_admin_update" on public.inquiries;
+
+create policy "inquiries_admin_update"
+  on public.inquiries
+  for update
+  to authenticated
+  using (
+    exists (
+      select 1
+      from public.admin_roles ar
+      where ar.user_id = auth.uid()
+        and ar.role in ('super', 'inquiries')
+    )
+  )
+  with check (
+    exists (
+      select 1
+      from public.admin_roles ar
+      where ar.user_id = auth.uid()
+        and ar.role in ('super', 'inquiries')
+    )
+  );
+
 -- 댓글 삭제: 작성자 + super + board
 drop policy if exists "post_comments_delete_admin_or_author" on public.post_comments;
 

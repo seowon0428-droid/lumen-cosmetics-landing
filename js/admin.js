@@ -170,7 +170,9 @@
     const sb = ensureClient();
     const { data, error } = await sb
       .from("inquiries")
-      .select("id, created_at, name, email, message, privacy_agreed")
+      .select(
+        "id, created_at, name, email, message, status, admin_reply, replied_at, replied_by"
+      )
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -190,29 +192,118 @@
       return;
     }
 
-    inquiriesBody.innerHTML = data
-      .map(function (row) {
-        return (
-          "<tr>" +
-          "<td>" +
-          escapeHtml(formatDate(row.created_at)) +
-          "</td>" +
-          "<td>" +
-          escapeHtml(row.name) +
-          "</td>" +
-          "<td><a href=\"mailto:" +
-          escapeHtml(row.email) +
-          '">' +
-          escapeHtml(row.email) +
-          "</a></td>" +
-          '<td class="admin-table__message">' +
-          escapeHtml(row.message) +
-          "</td>" +
-          "</tr>"
-        );
-      })
-      .join("");
+    inquiriesBody.innerHTML = data.map(renderInquiryRow).join("");
   }
+
+  function renderInquiryStatus(row) {
+    const isReplied = row.status === "replied";
+    const label = isReplied ? "답변완료" : "신규";
+    const cls = isReplied
+      ? "inquiry-status--replied"
+      : "inquiry-status--new";
+    return (
+      '<span class="inquiry-status ' + cls + '">' + label + "</span>"
+    );
+  }
+
+  function renderInquiryReplyCell(row) {
+    const meta =
+      row.replied_at && row.replied_by
+        ? '<p class="inquiry-reply-meta">마지막 답변: ' +
+          escapeHtml(formatDate(row.replied_at)) +
+          " · " +
+          escapeHtml(row.replied_by) +
+          "</p>"
+        : "";
+    const draft = row.admin_reply ? escapeHtml(row.admin_reply) : "";
+    return (
+      '<form class="inquiry-reply-form" data-inquiry-reply="' +
+      row.id +
+      '">' +
+      '<label class="visually-hidden" for="reply-' +
+      row.id +
+      '">관리자 답변</label>' +
+      '<textarea id="reply-' +
+      row.id +
+      '" required minlength="2" maxlength="2000" placeholder="답변 내용을 입력하세요">' +
+      draft +
+      "</textarea>" +
+      '<button type="submit" class="btn">답변 저장</button>' +
+      meta +
+      "</form>"
+    );
+  }
+
+  function renderInquiryRow(row) {
+    return (
+      "<tr data-inquiry-id=\"" +
+      row.id +
+      '">' +
+      "<td>" +
+      escapeHtml(formatDate(row.created_at)) +
+      "</td>" +
+      "<td>" +
+      escapeHtml(row.name) +
+      "</td>" +
+      '<td><a href="mailto:' +
+      escapeHtml(row.email) +
+      '">' +
+      escapeHtml(row.email) +
+      "</a></td>" +
+      "<td>" +
+      renderInquiryStatus(row) +
+      "</td>" +
+      '<td class="admin-table__message">' +
+      escapeHtml(row.message) +
+      "</td>" +
+      "<td>" +
+      renderInquiryReplyCell(row) +
+      "</td>" +
+      "</tr>"
+    );
+  }
+
+  async function saveInquiryReply(inquiryId, replyText) {
+    const sb = ensureClient();
+    const { error } = await sb
+      .from("inquiries")
+      .update({
+        admin_reply: replyText,
+        status: "replied",
+        replied_at: new Date().toISOString(),
+        replied_by: adminUser.email,
+      })
+      .eq("id", inquiryId);
+    if (error) throw error;
+  }
+
+  inquiriesBody.addEventListener("submit", async function (e) {
+    const form = e.target.closest("[data-inquiry-reply]");
+    if (!form) return;
+    e.preventDefault();
+    if (!canAccessInquiries(adminRole)) return;
+
+    const inquiryId = Number(form.getAttribute("data-inquiry-reply"));
+    const textarea = form.querySelector("textarea");
+    const replyText = (textarea?.value || "").trim();
+    if (replyText.length < 2) {
+      setStatus(listStatus, "답변은 2자 이상 입력해 주세요.", "error");
+      return;
+    }
+
+    try {
+      await saveInquiryReply(inquiryId, replyText);
+      setStatus(listStatus, "답변이 저장되었습니다.", "success");
+      await loadInquiries();
+    } catch (err) {
+      setStatus(
+        listStatus,
+        (err.message || "저장에 실패했습니다.") +
+          " — schema-inquiries-reply.sql 실행 여부를 확인해 주세요.",
+        "error"
+      );
+    }
+  });
 
   function renderComments(comments) {
     const sorted = (comments || []).slice().sort(function (a, b) {

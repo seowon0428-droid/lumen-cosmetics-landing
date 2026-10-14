@@ -120,6 +120,58 @@
   padding: 2rem 0;
 }
 
+.inquiry-status {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 2px;
+  white-space: nowrap;
+}
+
+.inquiry-status--new {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.inquiry-status--replied {
+  background: #e8e8e8;
+  color: #333;
+}
+
+.inquiry-reply-form textarea {
+  width: 100%;
+  min-width: 14rem;
+  min-height: 4.5rem;
+  padding: 0.5rem;
+  font: inherit;
+  font-size: 0.85rem;
+  border: 1px solid var(--color-border);
+  margin-bottom: 0.5rem;
+}
+
+.inquiry-reply-form .btn {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8rem;
+}
+
+.inquiry-reply-meta {
+  font-size: 0.75rem;
+  color: var(--color-muted);
+  margin: 0.35rem 0 0;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
 .admin-tabs {
   display: flex;
   gap: 0.5rem;
