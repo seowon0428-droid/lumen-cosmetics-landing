@@ -25,6 +25,7 @@ Repository **Settings → Pages → Branch: main, folder: / (root)** 후 `index.
 2. **Environment Variables** 추가:
    - `SUPABASE_URL`
    - `SUPABASE_ANON_KEY`
+   - `OPENAI_API_KEY` (관리자 페이지 AI 초안)
 3. Deploy (빌드 시 `scripts/generate-config.js`가 `js/config.js` 생성)
 
 로컬: `npx vercel login` → `npx vercel deploy --prod`

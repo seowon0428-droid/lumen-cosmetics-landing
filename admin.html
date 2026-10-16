@@ -73,6 +73,9 @@
           <button type="button" class="btn" id="refresh-btn">새로고침</button>
         </div>
         <p class="admin-meta" id="admin-session-meta"></p>
+        <p class="admin-ai-hint" id="admin-ai-hint" hidden>
+          각 문의·게시글의 <strong>AI</strong> 버튼을 누르면 비고/댓글 칸에 초안이 채워집니다. 수정 후 저장하세요.
+        </p>
         <div class="admin-tabs" role="tablist">
           <button
             type="button"
@@ -99,12 +102,13 @@
           <table class="admin-table" id="inquiries-table">
             <thead>
               <tr>
+                <th scope="col">AI</th>
                 <th scope="col">접수일</th>
                 <th scope="col">이름</th>
                 <th scope="col">이메일</th>
                 <th scope="col">상태</th>
                 <th scope="col">문의 내용</th>
-                <th scope="col">관리자 답변</th>
+                <th scope="col">비고</th>
               </tr>
             </thead>
             <tbody id="inquiries-body"></tbody>
@@ -125,6 +129,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/config.js"></script>
+    <script src="js/ai-admin.js"></script>
     <script src="js/admin.js"></script>
   </body>
 </html>

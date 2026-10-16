@@ -30,6 +30,8 @@
   let adminUser = null;
   let adminRole = null;
   const adminTabsEl = document.querySelector(".admin-tabs");
+  const inquiryById = new Map();
+  const postById = new Map();
 
   function setStatus(el, message, type) {
     el.textContent = message || "";
@@ -56,6 +58,41 @@
       .replace(/"/g, "&quot;");
   }
 
+  async function getAccessToken() {
+    const sb = ensureClient();
+    const { data, error } = await sb.auth.getSession();
+    if (error) throw error;
+    const token = data.session?.access_token;
+    if (!token) {
+      throw new Error("로그인이 필요합니다.");
+    }
+    return token;
+  }
+
+  async function runAiDraft(button, payload, textarea, statusEl) {
+    if (!window.LUMEN_AI?.generateDraft) {
+      setStatus(statusEl, "AI 모듈을 불러오지 못했습니다.", "error");
+      return;
+    }
+    const label = button.textContent;
+    button.disabled = true;
+    button.textContent = "생성 중…";
+    setStatus(statusEl, "", "");
+    try {
+      const token = await getAccessToken();
+      const text = await window.LUMEN_AI.generateDraft(token, payload);
+      textarea.value = text;
+      textarea.focus();
+      setStatus(statusEl, "AI 초안을 작성했습니다. 수정 후 저장하세요.", "success");
+    } catch (err) {
+      setStatus(statusEl, err.message || "AI 생성에 실패했습니다.", "error");
+      statusEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    } finally {
+      button.disabled = false;
+      button.textContent = label;
+    }
+  }
+
   function ensureClient() {
     if (!supabaseUrl || !supabaseAnonKey) {
       throw new Error(
@@ -74,12 +111,17 @@
     logoutBtn.hidden = true;
   }
 
+  const adminAiHint = document.getElementById("admin-ai-hint");
+
   function showDashboard(email, role) {
     loginPanel.hidden = true;
     inquiriesPanel.hidden = false;
     logoutBtn.hidden = false;
     const label = ROLE_LABELS[role] || role;
     sessionMeta.textContent = "로그인: " + email + " · " + label;
+    if (adminAiHint) {
+      adminAiHint.hidden = false;
+    }
   }
 
   function canAccessInquiries(role) {
@@ -186,12 +228,17 @@
     }
 
     if (!data || data.length === 0) {
+      inquiryById.clear();
       inquiriesEmpty.hidden = false;
       inquiriesEmpty.innerHTML =
         "표시할 문의가 없거나 조회 권한(RLS)이 없습니다. schema-admin.sql을 실행했는지 확인하세요.";
       return;
     }
 
+    inquiryById.clear();
+    data.forEach(function (row) {
+      inquiryById.set(row.id, row);
+    });
     inquiriesBody.innerHTML = data.map(renderInquiryRow).join("");
   }
 
@@ -222,10 +269,10 @@
       '">' +
       '<label class="visually-hidden" for="reply-' +
       row.id +
-      '">관리자 답변</label>' +
+      '">비고</label>' +
       '<textarea id="reply-' +
       row.id +
-      '" required minlength="2" maxlength="2000" placeholder="답변 내용을 입력하세요">' +
+      '" required minlength="2" maxlength="2000" placeholder="담당 업무 메모·답변 초안을 입력하세요">' +
       draft +
       "</textarea>" +
       '<button type="submit" class="btn">답변 저장</button>' +
@@ -239,6 +286,11 @@
       "<tr data-inquiry-id=\"" +
       row.id +
       '">' +
+      '<td class="admin-table__ai">' +
+      '<button type="button" class="btn btn--ai" data-ai-inquiry="' +
+      row.id +
+      '" title="AI로 비고 초안 작성">AI</button>' +
+      "</td>" +
       "<td>" +
       escapeHtml(formatDate(row.created_at)) +
       "</td>" +
@@ -276,6 +328,36 @@
       .eq("id", inquiryId);
     if (error) throw error;
   }
+
+  inquiriesBody.addEventListener("click", async function (e) {
+    const aiBtn = e.target.closest("[data-ai-inquiry]");
+    if (!aiBtn || !canAccessInquiries(adminRole)) return;
+
+    const inquiryId = Number(aiBtn.getAttribute("data-ai-inquiry"));
+    const row = inquiryById.get(inquiryId);
+    const form = aiBtn.closest("tr")?.querySelector("[data-inquiry-reply]");
+    const textarea = form?.querySelector("textarea");
+    if (!row || !textarea) return;
+
+    await runAiDraft(
+      aiBtn,
+      {
+        kind: "inquiry_note",
+        context: {
+          created_at: row.created_at,
+          name: row.name,
+          email: row.email,
+          message: row.message,
+          status: row.status,
+          admin_reply: row.admin_reply,
+          replied_at: row.replied_at,
+          replied_by: row.replied_by,
+        },
+      },
+      textarea,
+      listStatus
+    );
+  });
 
   inquiriesBody.addEventListener("submit", async function (e) {
     const form = e.target.closest("[data-inquiry-reply]");
@@ -363,9 +445,15 @@
     }
 
     if (!data || data.length === 0) {
+      postById.clear();
       boardEmpty.hidden = false;
       return;
     }
+
+    postById.clear();
+    data.forEach(function (post) {
+      postById.set(post.id, post);
+    });
 
     adminBoardList.innerHTML = data
       .map(function (post) {
@@ -389,9 +477,14 @@
           '<form class="admin-comment-form" data-comment-form="' +
           post.id +
           '">' +
+          '<div class="admin-comment-form__head">' +
           '<label class="admin-meta" for="comment-' +
           post.id +
           '">관리자 댓글</label>' +
+          '<button type="button" class="btn btn--ai btn--ai-sm" data-ai-comment="' +
+          post.id +
+          '" title="AI 댓글 초안">AI</button>' +
+          "</div>" +
           '<textarea id="comment-' +
           post.id +
           '" required minlength="1" maxlength="2000" placeholder="댓글을 입력하세요"></textarea>' +
@@ -421,6 +514,39 @@
   }
 
   adminBoardList.addEventListener("click", async function (e) {
+    const aiBtn = e.target.closest("[data-ai-comment]");
+    if (aiBtn && canAccessBoard(adminRole)) {
+      const postId = Number(aiBtn.getAttribute("data-ai-comment"));
+      const post = postById.get(postId);
+      const form = aiBtn.closest("[data-comment-form]");
+      const textarea = form?.querySelector("textarea");
+      if (!post || !textarea) return;
+
+      const comments = (post.post_comments || []).map(function (c) {
+        return {
+          created_at: c.created_at,
+          author_email: c.author_email,
+          body: c.body,
+        };
+      });
+
+      await runAiDraft(
+        aiBtn,
+        {
+          kind: "board_comment",
+          context: {
+            title: post.title,
+            body: post.body,
+            author_email: post.author_email,
+            comments: comments,
+          },
+        },
+        textarea,
+        boardStatus
+      );
+      return;
+    }
+
     const delBtn = e.target.closest("[data-delete-comment]");
     if (!delBtn) return;
     const commentId = delBtn.getAttribute("data-delete-comment");

@@ -2,6 +2,7 @@
  * Vercel 빌드 시 환경 변수로 js/config.js 생성
  * Vercel Project Settings → Environment Variables:
  *   SUPABASE_URL, SUPABASE_ANON_KEY
+ *   (AI는 서버 환경 변수 OPENAI_API_KEY — config.js에 넣지 않음)
  */
 const fs = require("fs");
 const path = require("path");

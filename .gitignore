@@ -4,4 +4,7 @@ desktop.ini
 *.log
 .vercel
 js/config.js
+.env
+.env.local
+.env*.local
 supabase/.temp/

@@ -107,6 +107,62 @@
   white-space: nowrap;
 }
 
+.admin-table__ai {
+  width: 3.25rem;
+  text-align: center;
+  vertical-align: middle;
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: #fff;
+  box-shadow: 4px 0 0 rgba(0, 0, 0, 0.04);
+}
+
+.admin-table thead .admin-table__ai {
+  background: var(--color-beige);
+  z-index: 3;
+}
+
+.admin-ai-hint {
+  margin: -0.5rem 0 1rem;
+  padding: 0.65rem 0.85rem;
+  font-size: 0.85rem;
+  background: #e8f1fb;
+  border: 1px solid #b8d4f0;
+}
+
+.btn--ai {
+  padding: 0.35rem 0.55rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  background: #1a4d8f;
+}
+
+.btn--ai:hover {
+  opacity: 0.9;
+}
+
+.btn--ai:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.btn--ai-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.72rem;
+}
+
+.admin-comment-form__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.admin-comment-form__head .admin-meta {
+  margin: 0;
+}
+
 .admin-table__message {
   min-width: 12rem;
   max-width: 28rem;
